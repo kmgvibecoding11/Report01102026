@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRD — Анализ документов</title>
+<style>
+:root{
+  --bg:#f4f6fa;--surface:#ffffff;--ink:#0b0f19;--muted:#5b6478;
+  --blue:#1550d6;--blue-soft:#eaf0ff;--head:#0b0f19;--line:#dfe4ee;--on-head:#ffffff;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b0f19;--surface:#131a29;--ink:#f2f5fb;--muted:#98a2b8;
+    --blue:#4d82ff;--blue-soft:#16264d;--head:#05080f;--line:#25304a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0f19;--surface:#131a29;--ink:#f2f5fb;--muted:#98a2b8;
+  --blue:#4d82ff;--blue-soft:#16264d;--head:#05080f;--line:#25304a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+a{color:var(--blue)}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px}
+header.top{background:var(--head);color:var(--on-head);position:sticky;top:0;z-index:10}
+header.top .wrap{display:flex;align-items:center;gap:16px;height:56px}
+header.top b{font-size:15px;letter-spacing:.2px;white-space:nowrap}
+header.top nav{display:flex;gap:4px;overflow-x:auto;margin-left:auto;scrollbar-width:none}
+header.top nav a{color:#c9d3ea;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;white-space:nowrap}
+header.top nav a:hover{background:rgba(255,255,255,.1);color:#fff}
+button.theme{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:13px}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:center;padding:40px 0 24px}
+.hero h1{font-size:clamp(28px,4.5vw,40px);line-height:1.15;margin:0 0 12px}
+.hero p{color:var(--muted);margin:0 0 16px}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{background:var(--blue-soft);color:var(--blue);border-radius:99px;padding:4px 12px;font-size:13px;font-weight:600}
+.hero svg{width:100%;height:auto}
+
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:8px}
+.meta div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.meta small{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.meta span{font-weight:600}
+
+section{padding:36px 0 4px}
+h2{display:flex;align-items:center;gap:12px;font-size:24px;margin:0 0 16px}
+h2 .n{display:grid;place-items:center;min-width:36px;height:36px;border-radius:9px;background:var(--blue-soft);color:var(--blue);font-size:14px;font-weight:700}
+h3{font-size:16px;margin:0 0 8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+ul{margin:0;padding-left:20px}
+li{margin:4px 0}
+.muted{color:var(--muted)}
+
+/* flow */
+.flow{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;counter-reset:s}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 12px;font-size:13px;position:relative}
+.step::before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--surface);font-weight:700;font-size:13px;margin-bottom:8px}
+.step:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:50%;color:var(--muted);z-index:1}
+
+/* blocks */
+.blocks{display:grid;gap:12px}
+.block{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.block summary{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;font-weight:600;list-style:none}
+.block summary::-webkit-details-marker{display:none}
+.block summary .ic{width:38px;height:38px;border-radius:10px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;flex:none}
+.block summary .ic svg{width:22px;height:22px}
+.block summary .num{color:var(--muted);font-size:13px;font-weight:600}
+.block summary::after{content:"+";margin-left:auto;font-size:22px;color:var(--muted)}
+.block[open] summary::after{content:"−"}
+.block .body{padding:0 18px 18px;border-top:1px solid var(--line);padding-top:14px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+code{background:var(--blue-soft);color:var(--blue);padding:1px 6px;border-radius:5px;font-size:.9em}
+.tablewrap{overflow-x:auto}
+
+/* stats */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.kpi{background:var(--bg);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font-size:24px}
+.kpi small{color:var(--muted);font-size:12px}
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:150px 1fr 70px;gap:10px;align-items:center;font-size:13px}
+.bar i{display:block;height:14px;border-radius:7px;background:var(--blue)}
+.bar.top i{background:var(--ink)}
+.bar span:last-child{text-align:right;color:var(--muted)}
+.remark{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-top:8px;font-size:14px}
+.remark.hot{border-color:var(--ink);border-width:2px}
+.remark .cat{font-size:12px;background:var(--blue-soft);color:var(--blue);border-radius:99px;padding:2px 10px;white-space:nowrap}
+.remark .x{margin-left:auto;font-weight:700}
+.lvl{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:2px 10px;border:1px solid var(--line)}
+.lvl.h{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.lvl.m{background:var(--blue-soft);color:var(--blue);border-color:transparent}
+
+/* palette */
+.sw{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.sw div{border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:12px;background:var(--surface)}
+.sw i{display:block;height:54px}
+.sw p{margin:0;padding:8px 10px}
+.sw b{display:block;font-size:13px}
+
+/* tech pipeline */
+.pipe{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pipe span{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px}
+.pipe em{color:var(--muted);font-style:normal}
+pre{margin:0;background:var(--head);color:#d6e2ff;border-radius:12px;padding:16px;overflow-x:auto;font-size:13px;line-height:1.5}
+
+/* timeline */
+.tl{border-left:2px solid var(--line);margin-left:8px;padding-left:20px;display:grid;gap:16px}
+.tl div{position:relative}
+.tl div::before{content:"";position:absolute;left:-27px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--blue)}
+.tl b{display:block}
+
+.check{list-style:none;padding:0;display:grid;gap:8px}
+.check li{display:flex;gap:10px;margin:0}
+.check li::before{content:"✓";flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--blue-soft);color:var(--blue);font-size:13px;font-weight:700}
+
+footer{margin-top:48px;padding:24px 0 40px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
+
+@media (max-width:700px){
+  .hero{grid-template-columns:1fr}
+  .hero .art{order:-1}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .flow{grid-template-columns:repeat(2,1fr)}
+  .step::after{display:none!important}
+  header.top b{display:none}
+}
+@media (max-width:520px){
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .bar{grid-template-columns:100px 1fr 56px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <b>PRD · Анализ документов</b>
+    <nav aria-label="Разделы">
+      <a href="#overview">Обзор</a>
+      <a href="#flow">Сценарий</a>
+      <a href="#blocks">Блоки 01–05</a>
+      <a href="#design">Дизайн</a>
+      <a href="#tech">Техника</a>
+      <a href="#errors">Ошибки</a>
+      <a href="#accept">Приёмка</a>
+      <a href="#history">История</a>
+    </nav>
+    <button class="theme" id="theme" type="button" aria-label="Переключить тему">◐</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+<div class="hero" id="top">
+  <div>
+    <h1>Веб-сервис «Анализ документов»</h1>
+    <p>Загрузите Word или PDF — и за одну минуту получите краткое описание, системные замечания со статистикой повторяемости, риски и рекомендации.</p>
+    <div class="tags"><span class="tag">DOCX и PDF</span><span class="tag">Замечания</span><span class="tag">Риски</span><span class="tag">Рекомендации</span></div>
+  </div>
+  <div class="art">
+    <svg viewBox="0 0 320 240" role="img" aria-label="Иллюстрация: документ, лупа с галочкой, диаграмма и щит">
+      <rect x="40" y="24" width="140" height="180" rx="12" fill="var(--surface)" stroke="var(--line)" stroke-width="2"/>
+      <rect x="58" y="46" width="70" height="8" rx="4" fill="var(--ink)"/>
+      <rect x="58" y="68" width="104" height="6" rx="3" fill="var(--line)"/>
+      <rect x="58" y="84" width="96" height="6" rx="3" fill="var(--line)"/>
+      <rect x="58" y="100" width="104" height="6" rx="3" fill="var(--line)"/>
+      <rect x="58" y="116" width="60" height="6" rx="3" fill="var(--line)"/>
+      <rect x="58" y="150" width="14" height="32" rx="3" fill="var(--blue)"/>
+      <rect x="78" y="136" width="14" height="46" rx="3" fill="var(--ink)"/>
+      <rect x="98" y="160" width="14" height="22" rx="3" fill="var(--blue)"/>
+      <rect x="118" y="144" width="14" height="38" rx="3" fill="var(--blue)"/>
+      <circle cx="206" cy="118" r="44" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="8"/>
+      <path d="M186 118l14 14 26-30" fill="none" stroke="var(--blue)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M238 152l36 40" stroke="var(--ink)" stroke-width="12" stroke-linecap="round"/>
+      <path d="M268 28l34 12v28c0 20-14 34-34 42-20-8-34-22-34-42V40z" fill="var(--ink)"/>
+      <path d="M255 66l9 9 17-19" fill="none" stroke="var(--surface)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+</div>
+
+<div class="meta">
+  <div><small>Версия</small><span>1.2</span></div>
+  <div><small>Статус</small><span>Реализовано</span></div>
+  <div><small>Язык</small><span>Русский</span></div>
+  <div><small>Формат</small><span>Один HTML-файл</span></div>
+  <div><small>Публикация</small><span><a href="https://claude.ai/artifact/K5A1tYCWvwMF6WXJp5RCz2">Claude Artifact</a></span></div>
+</div>
+
+<!-- 1 -->
+<section id="overview">
+  <h2><span class="n">1</span>Обзор продукта</h2>
+  <div class="grid2">
+    <div class="card"><h3>Проблема</h3>
+      <p class="muted" style="margin:0">Первичная проверка договоров, регламентов и отчётов выполняется вручную, занимает время и даёт неоднородный результат.</p>
+    </div>
+    <div class="card"><h3>Целевая аудитория</h3>
+      <p class="muted" style="margin:0">Юридические, финансовые, административные и проектные подразделения, которым нужна быстрая предварительная оценка документа.</p>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="card"><h3>Цели</h3>
+      <ul class="check">
+        <li>Первичная проверка — до одной минуты</li>
+        <li>Единый формат: описание, замечания, риски, рекомендации</li>
+        <li>Видно, какие недочёты повторяются чаще всего</li>
+        <li>Один экран, одно основное действие</li>
+      </ul>
+    </div>
+    <div class="card"><h3>Не цели</h3>
+      <ul>
+        <li>Юридическая или экспертная аттестация</li>
+        <li>Хранение документов и истории анализов</li>
+        <li>Редактирование и выгрузка исправленной версии</li>
+        <li>Распознавание сканов (OCR)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="flow">
+  <h2><span class="n">2</span>Пользовательский сценарий</h2>
+  <div class="flow">
+    <div class="step">Открывает страницу</div>
+    <div class="step">Загружает DOCX или PDF (drag-and-drop или выбор файла)</div>
+    <div class="step">Нажимает «Проанализировать»</div>
+    <div class="step">При первом запуске разрешает использование Claude</div>
+    <div class="step">Видит блоки с результатами по мере заполнения</div>
+    <div class="step">Убирает файл и загружает другой</div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="blocks">
+  <h2><span class="n">3</span>Функциональные требования</h2>
+  <p class="muted" style="margin-top:-6px">Шапка, вводный блок с иллюстрацией и пять нумерованных блоков. Нажмите на блок, чтобы раскрыть.</p>
+  <div class="blocks">
+
+    <details class="block" open>
+      <summary><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span><span><span class="num">Блок 01</span><br>Загрузка документа</span></summary>
+      <div class="body"><div class="tablewrap"><table>
+        <tr><th>ID</th><th>Требование</th></tr>
+        <tr><td>F-1.1</td><td>Форматы <code>.docx</code> и <code>.pdf</code></td></tr>
+        <tr><td>F-1.2</td><td>Drag-and-drop и диалог выбора файла</td></tr>
+        <tr><td>F-1.3</td><td>Область загрузки доступна с клавиатуры (Enter, Пробел)</td></tr>
+        <tr><td>F-1.4</td><td>Тип, имя и размер файла, кнопка «Убрать»</td></tr>
+        <tr><td>F-1.5</td><td>Максимальный размер — 25 МБ</td></tr>
+        <tr><td>F-1.6</td><td><code>.doc</code> отклоняется с подсказкой пересохранить как <code>.docx</code> или PDF</td></tr>
+        <tr><td>F-1.7</td><td>Прочие форматы: «Допустимые форматы: DOCX и PDF»</td></tr>
+        <tr><td>F-1.8</td><td>«Проанализировать» неактивна, пока файл не выбран</td></tr>
+        <tr><td>F-1.9</td><td>PDF без текстового слоя (скан) — сообщение с просьбой загрузить файл с текстом</td></tr>
+        <tr><td>F-1.10</td><td>Лимит текста 180 000 символов; при превышении анализируется начало и показывается пометка</td></tr>
+      </table></div></div>
+    </details>
+
+    <details class="block">
+      <summary><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8zM14 3v5h5M9 13h6M9 17h6"/></svg></span><span><span class="num">Блок 02</span><br>Краткий анализ и описание</span></summary>
+      <div class="body"><ul>
+        <li>Название или тема документа</li>
+        <li>Тип документа (договор, регламент, отчёт…)</li>
+        <li>Назначение одной фразой</li>
+        <li>Объём — число страниц (только PDF)</li>
+        <li>Краткое описание содержания (3–5 предложений)</li>
+        <li>Список ключевых положений</li>
+      </ul></div>
+    </details>
+
+    <details class="block">
+      <summary><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4zM12 8v3M12 13.5v.01"/></svg></span><span><span class="num">Блок 03</span><br>Системные замечания и повторяемость</span></summary>
+      <div class="body">
+        <p class="muted" style="margin-top:0">Структурные, логические, терминологические, формальные и стилистические недочёты. Макет вывода (данные условные):</p>
+        <div class="kpis">
+          <div class="kpi"><b>8</b><small>уникальных замечаний</small></div>
+          <div class="kpi"><b>21</b><small>всего повторений</small></div>
+          <div class="kpi"><b>5</b><small>категорий</small></div>
+          <div class="kpi"><b>38%</b><small>Формулировки — самая частая</small></div>
+        </div>
+        <h3>Повторяемость по категориям</h3>
+        <div class="bars">
+          <div class="bar top"><span>Формулировки</span><i style="width:100%"></i><span>8 · 38%</span></div>
+          <div class="bar"><span>Реквизиты и данные</span><i style="width:62%"></i><span>5 · 24%</span></div>
+          <div class="bar"><span>Структура</span><i style="width:50%"></i><span>4 · 19%</span></div>
+          <div class="bar"><span>Ссылки и сроки</span><i style="width:25%"></i><span>2 · 10%</span></div>
+          <div class="bar"><span>Терминология</span><i style="width:25%"></i><span>2 · 10%</span></div>
+        </div>
+        <div class="remark hot"><b>Неоднозначные сроки исполнения</b><span class="cat">Формулировки</span><span class="x">×5</span></div>
+        <div class="remark"><b>Не указаны реквизиты сторон</b><span class="cat">Реквизиты и данные</span><span class="x">×3</span></div>
+        <div class="remark"><b>Пропущен раздел об ответственности</b><span class="cat">Структура</span><span class="x">×1</span></div>
+        <p class="muted" style="font-size:13px">Повторяемость оценена по тексту и носит приблизительный характер.</p>
+
+        <h3 style="margin-top:20px">Требования</h3>
+        <div class="tablewrap"><table>
+          <tr><th>ID</th><th>Требование</th></tr>
+          <tr><td>F-3.1</td><td>Четыре показателя: уникальные замечания, общее число повторений, число категорий, самая частая категория с долей</td></tr>
+          <tr><td>F-3.2</td><td>Горизонтальная диаграмма по категориям, сортировка по убыванию, лидер — чёрным</td></tr>
+          <tr><td>F-3.3</td><td>Перечень по убыванию повторений, метка категории и счётчик «×N»</td></tr>
+          <tr><td>F-3.4</td><td>Самое частое замечание (N&nbsp;&gt;&nbsp;1) визуально выделено</td></tr>
+          <tr><td>F-3.5</td><td>Заголовок блока: «N зам. · M повтор.»</td></tr>
+          <tr><td>F-3.6</td><td>Пометка о приблизительности под диаграммой</td></tr>
+          <tr><td>F-3.7</td><td>Итоги и проценты считаются на странице, а не берутся из ответа модели</td></tr>
+          <tr><td>F-3.8</td><td>Замечания одной природы объединяются с суммарным числом повторений</td></tr>
+        </table></div>
+
+        <h3 style="margin-top:20px">Модель замечания</h3>
+        <div class="tablewrap"><table>
+          <tr><th>Поле</th><th>Описание</th></tr>
+          <tr><td><code>title</code></td><td>Краткий заголовок</td></tr>
+          <tr><td><code>detail</code></td><td>Суть и место в документе</td></tr>
+          <tr><td><code>category</code></td><td>Одна из фиксированных категорий</td></tr>
+          <tr><td><code>occurrences</code></td><td>Целое ≥ 1 — сколько раз встречается</td></tr>
+        </table></div>
+        <p style="margin-bottom:6px"><b>Категории:</b></p>
+        <div class="tags"><span class="tag">Структура</span><span class="tag">Формулировки</span><span class="tag">Противоречия</span><span class="tag">Реквизиты и данные</span><span class="tag">Терминология</span><span class="tag">Оформление и стиль</span><span class="tag">Ссылки и сроки</span><span class="tag">Прочее</span></div>
+      </div>
+    </details>
+
+    <details class="block">
+      <summary><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2zM12 10v5M12 18v.01"/></svg></span><span><span class="num">Блок 04</span><br>Предлагаемые риски</span></summary>
+      <div class="body">
+        <ul>
+          <li>Юридические, операционные, финансовые, репутационные и иные риски</li>
+          <li>У каждого: заголовок, описание, возможные последствия, уровень</li>
+          <li>Риск высокого уровня — чёрный акцент и чёрная метка</li>
+        </ul>
+        <p style="margin-bottom:0"><span class="lvl h">высокий</span> <span class="lvl m">средний</span> <span class="lvl">низкий</span></p>
+      </div>
+    </details>
+
+    <details class="block">
+      <summary><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0012 3z"/></svg></span><span><span class="num">Блок 05</span><br>Предлагаемые рекомендации</span></summary>
+      <div class="body">
+        <ul>
+          <li>Конкретные действия по доработке и снижению рисков, по возможности соотнесённые с замечаниями и рисками</li>
+          <li>У каждой: заголовок, описание, приоритет</li>
+        </ul>
+        <p style="margin-bottom:0"><span class="lvl h">высокий</span> <span class="lvl m">средний</span> <span class="lvl">низкий</span></p>
+      </div>
+    </details>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Общие требования к результату</h3>
+    <ul>
+      <li>От 3 до 7 пунктов в каждом разделе; для короткого документа — меньше, с пояснением</li>
+      <li>Только текст документа, без домыслов</li>
+      <li>Ответ модели — структурированный JSON; при ошибке разбора предлагается повторить</li>
+      <li>Состояния: ожидание, загрузка («Чтение документа…» / «Анализ документа…»), результат, ошибка</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="design">
+  <h2><span class="n">4</span>Дизайн и UX</h2>
+  <p class="muted" style="margin-top:-6px">Простота, лаконичность, корпоративный стиль. Только синий, белый и чёрный (плюс нейтральные серые).</p>
+  <div class="sw">
+    <div><i style="background:#f4f6fa"></i><p><b>Фон</b>#f4f6fa / #0b0f19</p></div>
+    <div><i style="background:#ffffff"></i><p><b>Карточки</b>#ffffff / #131a29</p></div>
+    <div><i style="background:#0b0f19"></i><p><b>Текст</b>#0b0f19 / #f2f5fb</p></div>
+    <div><i style="background:#1550d6"></i><p><b>Акцент</b>#1550d6 / #4d82ff</p></div>
+    <div><i style="background:#eaf0ff"></i><p><b>Мягкий синий</b>#eaf0ff / #16264d</p></div>
+    <div><i style="background:#0b0f19"></i><p><b>Шапка</b>#0b0f19 / #05080f</p></div>
+    <div><i style="background:#dfe4ee"></i><p><b>Линии</b>#dfe4ee / #25304a</p></div>
+  </div>
+  <div class="grid3" style="margin-top:16px">
+    <div class="card"><h3>Графика (v1.1)</h3><p class="muted" style="margin:0">Hero с иллюстрацией, иконки разделов в синих квадратах, пустые состояния. Всё — inline SVG на CSS-переменных.</p></div>
+    <div class="card"><h3>Адаптивность</h3><p class="muted" style="margin:0">Контент до 960 px; ≤700 px иллюстрация над текстом; ≤520 px статистика перестраивается; safe-area на мобильных.</p></div>
+    <div class="card"><h3>Доступность</h3><p class="muted" style="margin:0">Тёмная тема по системе, управление с клавиатуры, видимый фокус, <code>aria-label</code> у иллюстрации.</p></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="tech">
+  <h2><span class="n">5</span>Техническая реализация</h2>
+  <div class="card" style="margin-bottom:16px">
+    <h3>Поток обработки</h3>
+    <div class="pipe">
+      <span>Проверка файла</span><em>→</em>
+      <span>Извлечение текста<br><small class="muted">PDF: маркеры [Стр. N]</small></span><em>→</em>
+      <span>Проверка и обрезка до 180 000</span><em>→</em>
+      <span>Запрос к Claude + JSON-схема</span><em>→</em>
+      <span>Разбор JSON, статистика</span><em>→</em>
+      <span>Отрисовка блоков 02–05</span>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card tablewrap"><table>
+      <tr><th>Компонент</th><th>Решение</th></tr>
+      <tr><td>Формат</td><td>Один HTML-файл</td></tr>
+      <tr><td>Публикация</td><td>Claude Artifact</td></tr>
+      <tr><td>PDF</td><td>pdf.js 3.11.174 (cdnjs)</td></tr>
+      <tr><td>DOCX</td><td>mammoth 1.6.0 (cdnjs)</td></tr>
+      <tr><td>Анализ</td><td><code>sample.json</code>, модель <code>default</code></td></tr>
+      <tr><td>Вывод в DOM</td><td><code>textContent</code> (защита от XSS)</td></tr>
+      <tr><td>Хранение</td><td>Нет, только память страницы</td></tr>
+    </table></div>
+    <pre>{
+  "summary": {
+    "title": "", "doc_type": "",
+    "purpose": "", "description": "",
+    "key_points": [""]
+  },
+  "remarks": [{
+    "title": "", "detail": "",
+    "category": "", "occurrences": 1
+  }],
+  "risks": [{
+    "title": "", "detail": "",
+    "level": "высокий|средний|низкий"
+  }],
+  "recommendations": [{
+    "title": "", "detail": "",
+    "priority": "высокий|средний|низкий"
+  }]
+}</pre>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="errors">
+  <h2><span class="n">6</span>Обработка ошибок</h2>
+  <div class="card tablewrap"><table>
+    <tr><th>Ситуация</th><th>Сообщение</th></tr>
+    <tr><td>Модуль анализа недоступен</td><td>Модуль анализа недоступен в этом окне. Откройте страницу в Claude.</td></tr>
+    <tr><td>Нет разрешения</td><td>Доступ к анализу не разрешён. Разрешите использование Claude и повторите.</td></tr>
+    <tr><td>Claude недоступен</td><td>Claude недоступен для вашей учётной записи.</td></tr>
+    <tr><td>Лимит запросов</td><td>Превышен лимит запросов. Повторите позже.</td></tr>
+    <tr><td>Сессия истекла</td><td>Сессия истекла. Войдите заново.</td></tr>
+    <tr><td>Отклонено моделью</td><td>Не удалось проанализировать этот документ.</td></tr>
+    <tr><td>Ответ не разобран</td><td>Не удалось разобрать ответ. Попробуйте ещё раз.</td></tr>
+    <tr><td>Слишком большой</td><td>Документ слишком большой для анализа.</td></tr>
+    <tr><td>Ошибка чтения</td><td>Не удалось прочитать файл: …</td></tr>
+  </table></div>
+</section>
+
+<!-- 7 -->
+<section id="nfr">
+  <h2><span class="n">7</span>Требования и ограничения</h2>
+  <div class="grid2">
+    <div class="card"><h3>Нефункциональные</h3>
+      <ul>
+        <li><b>Скорость:</b> извлечение — секунды, анализ — до минуты с индикатором</li>
+        <li><b>Конфиденциальность:</b> текст идёт только в Claude через аккаунт пользователя, ничего не хранится</li>
+        <li><b>Стоимость:</b> расходует лимит Claude пользователя, согласие при первом запуске</li>
+        <li><b>Совместимость:</b> современные браузеры, десктоп и мобильные</li>
+        <li><b>Надёжность:</b> любая ошибка → понятное сообщение, кнопка снова активна</li>
+      </ul>
+    </div>
+    <div class="card"><h3>Ограничения</h3>
+      <ul>
+        <li>Нужен доступ к Claude (страница открыта внутри Claude)</li>
+        <li>Формат <code>.doc</code> не поддерживается</li>
+        <li>Сканы не читаются, OCR нет</li>
+        <li>Таблицы и колонтитулы могут извлекаться неполно</li>
+        <li>Повторяемость — оценка модели, не точный подсчёт</li>
+        <li>Не заменяет экспертную оценку</li>
+        <li>Внешние изображения и скрипты, кроме cdnjs, блокируются</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section id="accept">
+  <h2><span class="n">8</span>Критерии приёмки</h2>
+  <div class="card"><ul class="check">
+    <li>DOCX и PDF загружаются перетаскиванием и через выбор; <code>.doc</code> и прочие форматы отклоняются с понятным сообщением</li>
+    <li>После «Проанализировать» заполняются блоки 02–05</li>
+    <li>В блоке 03: четыре показателя, диаграмма, перечень с метками и «×N»</li>
+    <li>Сумма процентов ≈ 100 %, итог повторений = сумме счётчиков</li>
+    <li>У рисков и рекомендаций есть метки уровня или приоритета</li>
+    <li>Только синий, белый, чёрный; светлая и тёмная тема; телефон</li>
+    <li>Иллюстрации и иконки работают без внешних изображений</li>
+    <li>Скан, пустой файл и файл &gt; 25 МБ — свои сообщения без зависания</li>
+  </ul></div>
+</section>
+
+<!-- 9 -->
+<section id="history">
+  <h2><span class="n">9</span>История изменений</h2>
+  <div class="tl">
+    <div><b>v1.0</b><span class="muted">Пять блоков, корпоративный дизайн в синем/белом/чёрном, чтение DOCX и PDF, анализ через Claude.</span></div>
+    <div><b>v1.1</b><span class="muted">Графика: иллюстрация в hero, иконки разделов, пустые состояния (inline SVG).</span></div>
+    <div><b>v1.2</b><span class="muted">Статистика повторяемости: категории, счётчики, показатели, диаграмма, сортировка по частоте.</span></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section id="roadmap">
+  <h2><span class="n">10</span>Возможное развитие</h2>
+  <div class="grid3">
+    <div class="card">Выгрузка отчёта в PDF или DOCX</div>
+    <div class="card">Профили анализа: юридический, финансовый, технический</div>
+    <div class="card">Сравнение повторяемости между документами</div>
+    <div class="card">Поддержка сканов через OCR</div>
+    <div class="card">Подсветка проблемных фрагментов с привязкой к страницам</div>
+    <div class="card">Логотип и фирменные цвета компании</div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">Визуализация PRD «Анализ документов», версия 1.2. Анализ носит информационный характер и не заменяет экспертную оценку.</div>
+</footer>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('theme');
+  try{var t=localStorage.getItem('theme');if(t)root.setAttribute('data-theme',t)}catch(e){}
+  btn.addEventListener('click',function(){
+    var dark=root.getAttribute('data-theme')==='dark'||(!root.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme:dark)').matches);
+    var next=dark?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('theme',next)}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
